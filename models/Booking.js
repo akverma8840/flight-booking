@@ -1,4 +1,3 @@
-// models/Booking.js
 module.exports = (sequelize, DataTypes) => {
   const Booking = sequelize.define("Booking", {
     id: {
@@ -27,6 +26,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
       allowNull: false,
     },
+    paymentMethod: {
+      type: DataTypes.STRING,
+    },
+    status: {
+      type: DataTypes.STRING,
+    },
+    bookingRef: {
+      type: DataTypes.STRING,
+    }
   });
 
   return Booking;

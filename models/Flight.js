@@ -1,4 +1,3 @@
-// models/Flight.js
 module.exports = (sequelize, DataTypes) => {
   const Flight = sequelize.define("Flight", {
     id: {
@@ -39,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
- } );
+  });
 
   return Flight;
 };
