@@ -1,48 +1,24 @@
+// models/index.js
+const { DataTypes } = require("sequelize");
+const supabase = require("../config/supabaseDB");
 
-const { Sequelize, DataTypes } = require("sequelize");
-require("dotenv").config();
+const User = require("./User")(supabase, DataTypes);
+const Flight = require("./Flight")(supabase, DataTypes);
+const Booking = require("./Booking")(supabase, DataTypes);
+const Passenger = require("./Passenger")(supabase, DataTypes);
+const Airline = require("./Airline")(supabase, DataTypes);
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASS,
-  {
-    host: process.env.DB_HOST || "localhost",
-    dialect: "postgres",
-    port: process.env.DB_PORT || 5432,
-    logging: false, // Disable SQL logging
-    dialectOptions: {
-      ssl: false, // Important for local dev — prevent SSL auth issues
-    },
-  }
-);
-
-// Import models (each returns a function)
-const User = require("./User")(sequelize, DataTypes);
-const Flight = require("./Flight")(sequelize, DataTypes);
-const Booking = require("./Booking")(sequelize, DataTypes);
-
-// Define associations
+// Associations
 User.hasMany(Booking, { foreignKey: "userId" });
 Booking.belongsTo(User, { foreignKey: "userId" });
 
 Flight.hasMany(Booking, { foreignKey: "flightId" });
 Booking.belongsTo(Flight, { foreignKey: "flightId" });
 
-// Test connection
-(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log("Database connected successfully!");
-  } catch (error) {
-    console.error(" Database connection failed:", error.message);
-  }
-})();
+Booking.hasMany(Passenger, { foreignKey: "bookingId" });
+Passenger.belongsTo(Booking, { foreignKey: "bookingId" });
 
-module.exports = {
-  sequelize,
-  Sequelize,
-  User,
-  Flight,
-  Booking,
-};
+Airline.hasMany(Flight, { foreignKey: "airlineId" });
+Flight.belongsTo(Airline, { foreignKey: "airlineId" });
+
+module.exports = { supabase, User, Flight, Booking, Passenger, Airline };

@@ -1,37 +1,60 @@
-const { Flight, Airline } = require('../models');
-const { createFlight } = require('../validators/flight');
+const { Flight, Airline } = require("../models");
+const msg = require("../messages/responses");
+const STATUS = require("../constants/statusCodes");
+const { Op } = require("sequelize");
 
 exports.createFlight = async (req, res, next) => {
-  const { error } = createFlight.validate(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
   try {
-    const { airlineId, flightNumber, origin, destination, departureAt, arrivalAt, totalSeats, price } = req.body;
-    const f = await Flight.create({ airlineId, flightNumber, origin, destination, departureAt, arrivalAt, totalSeats, availableSeats: totalSeats, price });
-    res.status(201).json(f);
-  } catch (err) { next(err); }
+    const flight = await Flight.create({
+      airlineId: req.body.airlineId,
+      flightNumber: req.body.flightNumber,
+      origin: req.body.origin,
+      destination: req.body.destination,
+      departureTime: req.body.departureAt,
+      arrivalTime: req.body.arrivalAt,
+      totalSeats: req.body.totalSeats,
+      availableSeats: req.body.totalSeats,
+      price: req.body.price,
+    });
+
+    return res.status(STATUS.CREATED).json({
+      message: msg.flight.created,
+      flight,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.searchFlights = async (req, res, next) => {
   try {
-    const { origin, destination, date, page=1, limit=10 } = req.query;
     const where = {};
-    if (origin) where.origin = origin;
-    if (destination) where.destination = destination;
-    if (date) {
-      const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
-      const dayEnd = new Date(date); dayEnd.setHours(23,59,59,999);
-      where.departureAt = { $gte: dayStart, $lte: dayEnd }; // Sequelize v6: use Op
+
+    if (req.query.origin) where.origin = req.query.origin;
+    if (req.query.destination) where.destination = req.query.destination;
+
+    if (req.query.date) {
+      where.departureTime = {
+        [Op.between]: [
+          new Date(req.query.date + "T00:00:00"),
+          new Date(req.query.date + "T23:59:59"),
+        ],
+      };
     }
-    // using Sequelize operators properly:
-    const { Op } = require('sequelize');
-    if (date) where.departureAt = { [Op.between]: [new Date(date+'T00:00:00'), new Date(date+'T23:59:59')] };
 
     const flights = await Flight.findAndCountAll({
       where,
-      include: [{ model: Airline, attributes: ['name','code'] }],
-      limit: parseInt(limit), offset: (page-1)*limit,
-      order: [['departureAt', 'ASC']]
+      include: [{ model: Airline }],
     });
-    res.json({ total: flights.count, flights: flights.rows });
-  } catch (err) { next(err); }
+
+    if (flights.count === 0)
+      return res.status(STATUS.NOT_FOUND).json({ message: msg.flight.notFound });
+
+    return res.status(STATUS.OK).json({
+      total: flights.count,
+      flights: flights.rows,
+    });
+  } catch (err) {
+    next(err);
+  }
 };

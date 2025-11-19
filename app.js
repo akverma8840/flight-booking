@@ -1,48 +1,53 @@
-require('dotenv').config();
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const rateLimit = require('express-rate-limit');
+require("dotenv").config();
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
-const { sequelize } = require('./models'); 
-//const authRoutes = require('./routes/authRoutes');
-//const flightRoutes = require('./routes/flightRoutes');
-//const bookingRoutes = require('./routes/bookingRoutes');
-//const userRoutes = require('./routes/userRoutes');
-const errorHandler = require('./middleware/errorHandler');
+const { supabase } = require("./models");    // Supabase Sequelize instance
 const passport = require("./config/googleAuth");
-//const googleRoutes = require("./routes/googleAuthRoutes");
-const indexroutes= require("./routes/index");
+const indexRoutes = require("./routes/index");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(rateLimit({ windowMs: 15*60*1000, max: 300 }));
 app.use(passport.initialize());
 
-//app.use('/api/auth', indexroutes);
-//app.use('/api/flights', indexroutes);
-//app.use('/api/bookings', indexroutes);
-//app.use('/api/users', indexroutes);
-//app.use("/api/auth", indexroutes);
-app.use("/api", indexroutes);
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    message: "Too many requests, try again later."
+  })
+);
 
+// ---------- Routes ----------
+app.use("/api", indexRoutes);
 
+app.get("/", (req, res) => {
+  res.send("Flight Booking API (Supabase Connected)");
+});
 
-app.get('/', (req,res) => res.send('Flight Booking API'));
 
 (async () => {
   try {
-    await sequelize.authenticate();
-    console.log('DB connected');
-    
-    await sequelize.sync({ alter: true });
-    console.log('Models synced');
+    await supabase.authenticate();
+    console.log("Supabase database connected successfully");
+
+    await supabase.sync({ alter: true });
+    console.log(" All models synced with Supabase");
+
     const port = process.env.PORT || 5000;
-    app.listen(port, () => console.log(`Server running ${port}`));
+    app.listen(port, () => console.log(` Server running on port ${port}`));
   } catch (err) {
-    console.error(err);
+    console.error("Failed to start server:", err.message);
   }
 })();
+
+
 app.use(errorHandler);
+
+module.exports = app;

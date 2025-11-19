@@ -1,17 +1,20 @@
+// config/supabaseDB.js
 const { Sequelize } = require("sequelize");
+require("dotenv").config();
 
-const supabaseDB = new Sequelize(
-  process.env.SUPABASE_DB_NAME,
-  process.env.SUPABASE_DB_USER,
-  process.env.SUPABASE_DB_PASSWORD,
+const supabase = new Sequelize(
+  process.env.SUPABASE_DB_NAME,      
+  process.env.SUPABASE_DB_USER,      
+  process.env.SUPABASE_DB_PASSWORD,  
   {
-    host: process.env.SUPABASE_DB_HOST,
-    port: process.env.SUPABASE_DB_PORT,
+    host: process.env.SUPABASE_DB_HOST, 
     dialect: "postgres",
+    port: 5432,
+    logging: false,
     dialectOptions: {
       ssl: { require: true, rejectUnauthorized: false }
     }
   }
 );
 
-module.exports = supabaseDB;
+module.exports = supabase;
