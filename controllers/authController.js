@@ -1,59 +1,62 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { User } = require("../models");
-const msg = require("../messages/responses");
-const STATUS = require("../constants/statusCodes");
+const service = require("../services/auth.service");
+const response = require("../utils/response");
 
-exports.register = async (req, res, next) => {
+/* REGISTER */
+exports.register = async (req, res) => {
   try {
-    const exists = await User.findOne({ where: { email: req.body.email } });
-    if (exists)
-      return res.status(STATUS.CONFLICT).json({ message: msg.auth.emailInUse });
-
-    const hashed = await bcrypt.hash(req.body.password, 10);
-
-    const user = await User.create({
-      name: req.body.name,
-      email: req.body.email,
-      password: hashed,
-    });
-
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET
-    );
-
-    return res.status(STATUS.CREATED).json({
-      message: msg.auth.registerSuccess,
-      token,
-      user,
-    });
+    const message = await service.registerUser(req.body);
+    return response.created(res, message);
   } catch (err) {
-    next(err);
+    return response.error(res, err.message);
   }
 };
 
-exports.login = async (req, res, next) => {
+/* VERIFY EMAIL */
+exports.verifyEmail = async (req, res) => {
   try {
-    const user = await User.findOne({ where: { email: req.body.email } });
-
-    if (!user)
-      return res.status(STATUS.NOT_FOUND).json({ message: msg.auth.userNotFound });
-
-    const ok = await bcrypt.compare(req.body.password, user.password);
-    if (!ok)
-      return res.status(STATUS.UNAUTHORIZED).json({ message: msg.auth.invalidCredentials });
-
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET
-    );
-
-    return res.status(STATUS.OK).json({
-      message: msg.auth.loginSuccess,
-      token,
-    });
+    const message = await service.verifyEmailOtp(req.body);
+    return response.success(res, message);
   } catch (err) {
-    next(err);
+    return response.error(res, err.message);
+  }
+};
+
+/* LOGIN */
+exports.login = async (req, res) => {
+  try {
+    const data = await service.loginUser(req.body);
+    return response.success(res, data.message, { token: data.token });
+  } catch (err) {
+    return response.error(res, err.message);
+  }
+};
+
+/* FORGOT PASSWORD */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const message = await service.forgotPassword(req.body);
+    return response.success(res, message);
+  } catch (err) {
+    return response.error(res, err.message);
+  }
+};
+
+/* VERIFY RESET OTP */
+exports.verifyResetOtp = async (req, res) => {
+  try {
+    const message = await service.verifyResetOtp(req.body);
+    return response.success(res, message);
+  } catch (err) {
+    return response.error(res, err.message);
+  }
+};
+
+/* RESET PASSWORD */
+exports.resetPassword = async (req, res) => {
+  try {
+    const message = await service.resetPassword(req.body);
+    return response.success(res, message);
+  } catch (err) {
+    return response.error(res, err.message);
   }
 };
