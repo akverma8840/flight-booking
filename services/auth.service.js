@@ -1,10 +1,12 @@
 const bcrypt = require("bcrypt");
 const { User } = require("../models");
+const { sendEmail } = require("../utils/email");
+
 const messages = require("../utils/messages");
 const CONST = require("../constants/appConstants");
 
 const { generateOtp } = require("./otp.service");
-const { sendEmail } = require("./email.service");
+
 const { generateToken } = require("./token.service");
 
 /* REGISTER */

@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-console.log("🔍 Starting Flight Booking Backend Initialization...");
+console.log("Starting Flight Booking Backend Initialization...");
 
 const express = require("express");
 const helmet = require("helmet");
